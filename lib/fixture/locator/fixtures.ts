@@ -1,29 +1,14 @@
-import {promises as fs} from 'fs'
-
 import type {Locator, PlaywrightTestArgs, TestFixture} from '@playwright/test'
 import {selectors} from '@playwright/test'
 
-import {queryNames as allQueryNames} from '../common'
+import {queryNames as allQueryNames} from '../../common'
+import {replacer} from '../helpers'
+import type {LocatorQueries as Queries, SelectorEngine, SupportedQuery} from '../types'
 
-import {replacer, reviver} from './helpers'
-import type {
-  AllQuery,
-  FindQuery,
-  LocatorQueries as Queries,
-  Query,
-  Selector,
-  SelectorEngine,
-  SupportedQuery,
-} from './types'
-
-const isAllQuery = (query: Query): query is AllQuery => query.includes('All')
-const isNotFindQuery = (query: Query): query is Exclude<Query, FindQuery> =>
-  !query.startsWith('find')
+import {configuration} from './configuration'
+import {buildTestingLibraryScript, isAllQuery, isNotFindQuery, queryToSelector} from './helpers'
 
 const queryNames = allQueryNames.filter(isNotFindQuery)
-
-const queryToSelector = (query: SupportedQuery) =>
-  query.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() as Selector
 
 const queriesFixture: TestFixture<Queries, PlaywrightTestArgs> = async ({page}, use) => {
   const queries = queryNames.reduce(
@@ -112,21 +97,12 @@ const installTestingLibraryFixture: [
   {scope: 'test'; auto?: boolean},
 ] = [
   async ({context}, use) => {
-    const testingLibraryDomUmdScript = await fs.readFile(
-      require.resolve('@testing-library/dom/dist/@testing-library/dom.umd.js'),
-      'utf8',
-    )
-
-    await context.addInitScript(`
-        ${testingLibraryDomUmdScript}
-        
-        window.__testingLibraryReviver = ${reviver.toString()};
-    `)
+    await context.addInitScript(await buildTestingLibraryScript({configuration}))
 
     await use()
   },
   {scope: 'test', auto: true},
 ]
 
-export {queriesFixture, registerSelectorsFixture, installTestingLibraryFixture, within}
+export {installTestingLibraryFixture, queriesFixture, registerSelectorsFixture, within}
 export type {Queries}

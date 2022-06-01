@@ -1,4 +1,6 @@
-import {queries} from '@testing-library/dom'
+import {Config as TestingLibraryConfig, queries} from '@testing-library/dom'
+
+export type Config = Pick<TestingLibraryConfig, 'testIdAttribute'>
 
 export const queryNames: Array<keyof typeof queries> = [
   'queryByPlaceholderText',

@@ -4,8 +4,8 @@ import * as path from 'path'
 import {JSHandle, Page} from 'playwright'
 import waitForExpect from 'wait-for-expect'
 
-import {queryNames} from './common'
-import {ConfigurationOptions, ElementHandle, Queries, ScopedQueries} from './typedefs'
+import {Config, queryNames} from './common'
+import {ElementHandle, Queries, ScopedQueries} from './typedefs'
 
 const domLibraryAsString = readFileSync(
   path.join(__dirname, '../dom-testing-library.js'),
@@ -172,12 +172,12 @@ export function wait(
 
 export const waitFor = wait
 
-export function configure(options: Partial<ConfigurationOptions>): void {
-  if (!options) {
+export function configure(config: Partial<Config>): void {
+  if (!config) {
     return
   }
 
-  const {testIdAttribute} = options
+  const {testIdAttribute} = config
 
   if (testIdAttribute) {
     delegateFnBodyToExecuteInPage = delegateFnBodyToExecuteInPageInitial.replace(

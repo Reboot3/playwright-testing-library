@@ -4,6 +4,8 @@ import * as playwright from '@playwright/test'
 
 import {
   LocatorFixtures as TestingLibraryFixtures,
+  configure,
+  configurePage,
   locatorFixtures as fixtures,
   within,
 } from '../../lib/fixture'
@@ -129,8 +131,6 @@ test.describe('lib/fixture.ts (locators)', () => {
     })
 
     test('does not throw when querying for a specific element', async ({queries: {getByRole}}) => {
-      expect.assertions(1)
-
       await expect(getByRole('heading', {level: 3}).textContent()).resolves.not.toThrow()
     })
   })
@@ -147,6 +147,33 @@ test.describe('lib/fixture.ts (locators)', () => {
     expect(await innerLocator.count()).toBe(1)
   })
 
-  // TODO: configuration
+  test.describe('configuration', () => {
+    test.afterEach(() => {
+      configure({testIdAttribute: 'data-testid'})
+    })
+
+    test.describe('custom data-testeid', () => {
+      test.beforeEach(configurePage({testIdAttribute: 'data-id'}))
+
+      test('should support custom data-testid attribute name', async ({queries}) => {
+        const locator = queries.getByTestId('second-level-header')
+
+        expect(await locator.textContent()).toEqual('Hello h2')
+      })
+    })
+
+    test('should support subsequent changing the data-testid attribute names', async ({
+      queries,
+      page,
+    }) => {
+      await configurePage({testIdAttribute: 'data-id'})({page})
+      await configurePage({testIdAttribute: 'data-new-id'})({page})
+
+      const locator = queries.getByTestId('first-level-header')
+
+      expect(await locator.textContent()).toEqual('Hello h1')
+    })
+  })
+
   // TDOO: deferred page (do we need some alternative to `findBy*`?)
 })
